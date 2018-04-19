@@ -57,12 +57,14 @@ void loop() {
 
   // When system is on, the NeoPixel updates, and a chord is played
   if (systemState == HIGH) {
-
+    //Serial.println("LEDON");
     for (int i = 0; i <= numPixelUpdates; i++) {
-       rainbowCycleUpdate();
+       blueGreenUpdate();
     }
    
     playTetrad(analogRead(pot1Pin)*2,analogRead(pot2Pin)*2,analogRead(pot3Pin)*2,analogRead(pot4Pin)*2); // Notes of the Chord are based on 4 potentiometer inputs
+  } else {
+    noTone(speakerPin);
   }
   
   int drawerState = digitalRead(drawerPin);
@@ -75,12 +77,18 @@ void loop() {
         // Drawer is now open, so LED should be switched off, and needles should be moved up
         systemState = LOW;
         ledOff();
-        rainbowNumber = 0;
+        
+        rainbowNumber = 0;       
         moveNeedles("up");
+        digitalWrite(speakerPin, LOW);
+        
+        //Serial.println("SSLOW");
       } else if (systemState == LOW && drawerState) {
         // Drawer is now closed, so needles should be moved down
+        //Serial.println("SSHIGH");
         systemState = HIGH;
-        moveNeedles("down");  
+        moveNeedles("down");
+          
       }
     }
     last_interrupt_time = millis(); //  Update Time since last update, to stop debounce
@@ -94,19 +102,20 @@ void loop() {
 
 void moveNeedles(String direction) {
   //Serial.println("moveNeedles");
+  //Serial.println(direction);
   delay(1);
 
   
   if (direction == "up") {
-    // If direction is up, move servo to position 0
-    for (servoPos = servoPos; servoPos >= 0; servoPos -= 1) { 
-      myServo.write(servoPos);
+    // If direction is up, move servo to the maxAngle
+    for (servoPos = 0; servoPos <= maxAngle; servoPos += 1) {
+      myServo.write(servoPos); 
       delay(servoWaitTime);
     }
   } else if (direction == "down") {
-    // If direction is down, move servo to the maxAngle
-    for (servoPos = 0; servoPos <= maxAngle; servoPos += 1) {
-      myServo.write(servoPos); 
+    // If direction is down, move servo to position 0
+    for (servoPos = servoPos; servoPos >= 0; servoPos -= 1) { 
+      myServo.write(servoPos);
       delay(servoWaitTime);
     }
   }
@@ -140,6 +149,7 @@ void playTetrad(int noteA, int noteB, int noteC, int noteD) {
 
 // Function to turn of NeoPixel
 void ledOff() {
+  Serial.println("LEDOFF");
   for(uint16_t i=0; i<strip.numPixels(); i++) {
     strip.setPixelColor(i, strip.Color(0,0,0));
   }
